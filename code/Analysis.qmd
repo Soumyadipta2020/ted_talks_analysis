@@ -1,0 +1,71 @@
+---
+title: "Analysis of Ted Talks"
+author: "Soumyadipta Das"
+format: html
+---
+
+# Library
+
+```{r}
+library(dplyr)
+library(DT)
+library(shiny)
+library(httr2)
+library(jsonlite)
+
+source('mongodb_helper.R')
+source('api.R')
+source('helper.R')
+```
+
+# Read Transcript Data
+
+```{r}
+df <- mongo_read(table = 'ted_talks_en', db = 'sample_transcript', url = mongo_url)
+df %>% glimpse()
+```
+
+# Predict transcript type using AI
+
+First 895 transcripts used for analysis due to API restrictions. Below is the code -
+
+```{r}
+# nim_output <- data.frame()
+# for(i in 1:895){
+#   text <- paste0(
+#   gsub("[\'\"]", " ", df$transcript[i]),
+#   "State which option the commenter is most likely to favor (A, B, C, D, E, F, G).
+#   State if the comment is 'For', 'Against', or 'Neutral' on option.
+#   tate if the strength of the commenter's opinon on a scale from 'Extremely strong', 'Very strong', 
+#   'Strong', 'Somewhat strong', or 'Mild'.
+#   No need any explanation or extra word.
+#   Produce the output in json format like this:\n{\n\'favored_option\': \'\',\n\'option_opinion\':
+#   '\',\n\'opinion_strength\': \'\'\n}"
+#   )
+#   
+#   response_nim <- chat_nvidia(
+#             text,
+#             history = NULL,
+#             temp = 0.5,
+#             api_key = nv_api_key,
+#             model_llm = "meta/llama-3.1-8b-instruct"
+#           ) %>%
+#         as.data.frame()
+#   
+#   temp <- (df[i,] %>% select(talk_id, title)) %>% 
+#     as.data.frame() %>% 
+#     bind_cols(response_nim)
+#   
+#   nim_output <- nim_output %>% bind_rows(temp)
+# }
+# 
+# write.csv(nim_output, "nim_output.csv", row.names = FALSE)
+```
+
+
+
+```{r}
+text_output <- read.csv("nim_output.csv", header = TRUE)
+head(text_output)
+```
+

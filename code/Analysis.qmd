@@ -15,15 +15,16 @@ library(jsonlite)
 library(plotly)
 
 source('mongodb_helper.R')
-source('api.R')
+# source('api.R')
 source('helper.R')
 ```
 
 # Read Transcript Data
 
 ```{r}
+df <- read.csv("sample_transcript.csv", header = TRUE)
 # df <- mongo_read(table = 'ted_talks_en', db = 'sample_transcript', url = mongo_url)
-# df %>% glimpse()
+df %>% glimpse()
 ```
 
 # Predict transcript type using AI

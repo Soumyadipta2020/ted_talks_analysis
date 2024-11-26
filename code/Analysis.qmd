@@ -12,6 +12,7 @@ library(DT)
 library(shiny)
 library(httr2)
 library(jsonlite)
+library(plotly)
 
 source('mongodb_helper.R')
 source('api.R')
@@ -21,8 +22,8 @@ source('helper.R')
 # Read Transcript Data
 
 ```{r}
-df <- mongo_read(table = 'ted_talks_en', db = 'sample_transcript', url = mongo_url)
-df %>% glimpse()
+# df <- mongo_read(table = 'ted_talks_en', db = 'sample_transcript', url = mongo_url)
+# df %>% glimpse()
 ```
 
 # Predict transcript type using AI
@@ -59,10 +60,41 @@ df %>% glimpse()
 # write.csv(nim_output, "nim_output.csv", row.names = FALSE)
 ```
 
-
-
 ```{r}
 text_output <- read.csv("nim_output.csv", header = TRUE)
+
+favored_df <- data.frame(favored_option = c("A", "B", "C", "D", "E", "F", "G"), favored_option_new = c(1:7))
+opinion_df <- data.frame(option_opinion = c('For', 'Neutral', 'Against'), 
+                         option_opinion_new = c(1,0,-1))
+strength_df <- data.frame(opinion_strength = c('Extremely strong', 'Very strong', 'Strong', 'Somewhat strong', 'Mild'), 
+                         opinion_strength_new = c(5:1))
+
+text_output <- text_output |> 
+  left_join(favored_df) |>
+  left_join(opinion_df) |>
+  left_join(strength_df) |>
+  mutate(count = 1) 
 head(text_output)
+```
+
+# Visualization
+```{r}
+text_output_plot <- text_output %>%
+  select(-favored_option, -option_opinion, -opinion_strength) %>%
+  group_by(favored_option_new, option_opinion_new, opinion_strength_new) %>%
+  summarise(count = sum(count, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  mutate(opinion_strength_new = as.factor(opinion_strength_new))
+
+fig <- plot_ly(text_output_plot, x = ~favored_option_new, y = ~option_opinion_new, 
+               z = ~count, color = ~opinion_strength_new)
+fig <- fig %>% add_markers()
+fig <- fig %>% layout(scene = list(xaxis = list(title = 'Favored Option'),
+                     yaxis = list(title = 'Option Opinion'),
+                     zaxis = list(title = 'Count')),
+                     title = "Transcript Analysis")
+
+fig
+
 ```
 

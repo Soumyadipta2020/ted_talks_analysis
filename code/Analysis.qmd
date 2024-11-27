@@ -6,7 +6,9 @@ format: html
 
 # Library
 
-```{r}
+This code sets up an R environment for building an interactive **Shiny application** that processes and visualizes data. It loads necessary libraries for **data manipulation** (`dplyr`), creating **interactive tables** (`DT`), handling **HTTP requests** (`httr2`), working with **JSON data** (`jsonlite`), and generating **interactive plots** (`plotly`). Additionally, it sources custom helper scripts (`mongodb_helper.R` and `helper.R`) to manage **MongoDB connections** and provide utility functions. This setup allows the app to pull data from various sources, process it, and present it dynamically within an interactive web interface.
+
+```{r, results='hide', warning=FALSE, message=FALSE}
 library(dplyr)
 library(DT)
 library(shiny)
@@ -21,6 +23,8 @@ source('helper.R')
 
 # Read Transcript Data
 
+This code reads TEDx talk transcript data into a data frame (`df`) from a CSV file named **"sample_transcript.csv"**. The commented line indicates an alternative method for reading data from a **MongoDB database** using a `mongo_read()` function, likely for a collection named **'ted_talks_en'**. Once the data is loaded, the `glimpse()` function from **dplyr** provides a quick overview of the data structure, including the column names, data types, and sample values, helping to understand the dataset's contents before further analysis or processing.
+
 ```{r}
 df <- read.csv("sample_transcript.csv", header = TRUE)
 # df <- mongo_read(table = 'ted_talks_en', db = 'sample_transcript', url = mongo_url)
@@ -28,6 +32,8 @@ df %>% glimpse()
 ```
 
 # Predict transcript type using AI
+
+Now we will send the transcript data to AI model (meta/llama-3.1-8b-instruct) to predict transcript topic, is the talks supports the topic and strength of support as follows,
 
 ```{r}
 # nim_output <- data.frame()
@@ -61,14 +67,26 @@ df %>% glimpse()
 # write.csv(nim_output, "nim_output.csv", row.names = FALSE)
 ```
 
+# Transcript prediction glimplse
+
+Let's read the data of response what we received from LLM,
+
 ```{r}
 text_output <- read.csv("nim_output.csv", header = TRUE)
+head(text_output)
+```
 
-favored_df <- data.frame(favored_option = c("A", "B", "C", "D", "E", "F", "G"), favored_option_new = c(1:7))
+We will reformat the data as follows,
+
+```{r}
+favored_df <- data.frame(favored_option = c("A", "B", "C", "D", "E", "F", "G"),
+                         favored_option_new = c("Nature or environment or climate", "Science or Technology", 
+                                                "Education or knowledge", "Social Media", "Economy or Finance", 
+                                                "Travel or new places or new experiences", "Others"))
 opinion_df <- data.frame(option_opinion = c('For', 'Neutral', 'Against'), 
                          option_opinion_new = c(1,0,-1))
 strength_df <- data.frame(opinion_strength = c('Extremely strong', 'Very strong', 'Strong', 'Somewhat strong', 'Mild'), 
-                         opinion_strength_new = c(5:1))
+                         opinion_strength_new = c('Extremely strong', 'Very strong', 'Strong', 'Somewhat strong', 'Mild'))
 
 text_output <- text_output |> 
   left_join(favored_df) |>
@@ -79,7 +97,10 @@ head(text_output)
 ```
 
 # Visualization
-```{r}
+
+Now we will visualize our findings as follows,
+
+```{r, warning=FALSE, message=FALSE}
 text_output_plot <- text_output %>%
   select(-favored_option, -option_opinion, -opinion_strength) %>%
   group_by(favored_option_new, option_opinion_new, opinion_strength_new) %>%
@@ -87,15 +108,33 @@ text_output_plot <- text_output %>%
   ungroup() %>% 
   mutate(opinion_strength_new = as.factor(opinion_strength_new))
 
-fig <- plot_ly(text_output_plot, x = ~favored_option_new, y = ~option_opinion_new, 
-               z = ~count, color = ~opinion_strength_new)
-fig <- fig %>% add_markers()
-fig <- fig %>% layout(scene = list(xaxis = list(title = 'Favored Option'),
-                     yaxis = list(title = 'Option Opinion'),
-                     zaxis = list(title = 'Count')),
-                     title = "Transcript Analysis")
+fig <- plot_ly(text_output_plot) %>% 
+  add_trace(
+    x = ~favored_option_new,
+    y = ~count, 
+    color = ~opinion_strength_new, 
+    name = ~opinion_strength_new, 
+    type = "bar"
+    ) %>% 
+  layout(title = "Transcript Analysis", 
+         xaxis = list(title = "Favoured Option"),
+         yaxis = list(title = "Count"),
+         legend = list(title = list(text = "Opinion Strength")),
+         barmode = 'stack', 
+         margin = list(t = 50)
+         )
 
 fig
-
 ```
 
+This bar plot titled **"Transcript Analysis"** illustrates the distribution of TEDx talk topics, predicting the strength of alignment with various themes. The x-axis represents different favored options or topics, while the y-axis shows the count of TEDx talks. The color-coded legend indicates the strength of opinion, ranging from "Mild" to "Extremely strong."
+
+## Key Insights:
+
+1. **Education or Knowledge** is the most dominant theme, with a high number of talks showing "Extremely strong" and "Very strong" alignment.
+2. **Science or Technology** also features prominently, with significant contributions in the "Extremely strong" category.
+3. **Economy or Finance** and **Nature or Environment or Climate** have comparatively fewer talks but show strong opinions.
+4. **Social Media** and **Travel or New Places or New Experiences** are the least discussed topics, with only minimal representation across all opinion strengths.
+5. Most topics have a substantial share of "Extremely strong" opinions, indicating that TEDx talks are generally focused on impactful and strongly aligned themes. 
+
+This analysis highlights that TEDx talks heavily favor themes related to education and technology, reflecting the platform's emphasis on knowledge dissemination and innovation.

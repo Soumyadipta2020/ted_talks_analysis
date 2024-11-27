@@ -13,7 +13,6 @@ This code sets up an R environment for building an interactive **Shiny applicati
 ```{r, results='hide', warning=FALSE, message=FALSE}
 library(dplyr)
 library(DT)
-library(shiny)
 library(httr2)
 library(jsonlite)
 library(plotly)
@@ -28,7 +27,7 @@ source('helper.R')
 This code reads TEDx talk transcript data into a data frame (`df`) from a CSV file named **"sample_transcript.csv"**. The commented line indicates an alternative method for reading data from a **MongoDB database** using a `mongo_read()` function, likely for a collection named **'ted_talks_en'**. Once the data is loaded, the `glimpse()` function from **dplyr** provides a quick overview of the data structure, including the column names, data types, and sample values, helping to understand the dataset's contents before further analysis or processing.
 
 ```{r}
-df <- read.csv("sample_transcript.csv", header = TRUE)
+df <- read.csv("data/sample_transcript.csv", header = TRUE)
 # df <- mongo_read(table = 'ted_talks_en', db = 'sample_transcript', url = mongo_url)
 df %>% glimpse()
 ```
@@ -66,7 +65,7 @@ Now we will send the transcript data to AI model (meta/llama-3.1-8b-instruct) to
 # 
 #   nim_output <- nim_output %>% bind_rows(temp)
 # }
-# write.csv(nim_output, "nim_output.csv", row.names = FALSE)
+# write.csv(nim_output, "data/nim_output.csv", row.names = FALSE)
 ```
 
 # Transcript prediction glimplse
@@ -74,7 +73,7 @@ Now we will send the transcript data to AI model (meta/llama-3.1-8b-instruct) to
 Let's read the data of response what we received from LLM,
 
 ```{r}
-text_output <- read.csv("nim_output.csv", header = TRUE)
+text_output <- read.csv("data/nim_output.csv", header = TRUE)
 head(text_output)
 ```
 

@@ -1,8 +1,10 @@
 ---
-title: "Analysis of Ted Talks"
+title: "Analysis of Tedx Talks"
 author: "Soumyadipta Das"
 format: html
 ---
+
+**Data Source:** [Tedx Talks - Kaggle](https://www.kaggle.com/datasets/miguelcorraljr/ted-ultimate-dataset)
 
 # Library
 
